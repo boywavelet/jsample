@@ -69,7 +69,7 @@ public class RateSampler {
 		String sep = props.getProperty(PropertyNames.STAT_OUTPUT_SEPERATOR, "###");
 		PrintWriter writer = new PrintWriter(
 				Files.newBufferedWriter(Paths.get(outFileName + "." + System.currentTimeMillis()), Charsets.UTF_8, 
-						StandardOpenOption.CREATE, StandardOpenOption.WRITE));
+						StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE));
 		try {
 			for (Map.Entry<String, Long> entry : l1Stat.entrySet()) {
 				writer.println(entry.getKey() + sep + entry.getValue() * 1.0 / tick.get());
@@ -84,7 +84,7 @@ public class RateSampler {
 	}
 	
 	private void fillStackTrace(StackTraceElement[] ste) {
-		int start = 0;
+		int start = ste.length;
 		for (int i = 0; i < ste.length; ++i) {
 			if (filter(ste, i)) {
 				start = i;
@@ -92,8 +92,8 @@ public class RateSampler {
 			}
 		}
 		
-		int end = ste.length - 1;
-		for (int i = end; i >= start; --i) {
+		int end = -1;
+		for (int i = ste.length - 1; i >= start; --i) {
 			if (filter(ste, i)) {
 				end = i;
 				break;
