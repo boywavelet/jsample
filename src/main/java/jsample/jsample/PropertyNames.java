@@ -10,4 +10,5 @@ public class PropertyNames {
 	public static final String STAT_OUTPUT_SEPERATOR = "stat_out_sep";
 	public static final String CONTAIN_ACCEPT_FILTERS = "contain_accept_filters";
 	public static final String CONTAIN_REJECT_FILTERS = "contain_reject_filters";
+	public static final String WATCH_DIR = "watch_dir";
 }
