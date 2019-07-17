@@ -18,24 +18,38 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.RateLimiter;
 
-public class RateSampler {
+public final class RateSampler {
 
+	private Properties props;
 	private ConcurrentMap<String, Long> l1Stat = new ConcurrentHashMap<String, Long>();
 	private ConcurrentMap<String, Long> l2Stat = new ConcurrentHashMap<String, Long>();
 	private AtomicInteger tick = new AtomicInteger(0);
 	private List<SampleFilter> filters;
-	private Properties props;
 	private RateLimiter limit;
 	private int threadNum;
 	private ExecutorService service;
-	private boolean isStarted;
+	private boolean isStarted = false;
 	public RateSampler(Properties props) {
-		this.props = props;
-		double sampleRate = Double.parseDouble(props.getProperty(PropertyNames.SAMPLE_RATE, "500.0"));
+		reset(props);
+	}
+	
+	public void reset(Properties props) {
+		if (isStarted) {
+			return;
+		}
+		
+		if (props != null) {
+			this.props = props;
+		}
+		
+		l1Stat.clear();
+		l2Stat.clear();
+		tick.set(0);
+		this.filters = SampleFilterManager.createSampleFilters(this.props);
+		double sampleRate = Double.parseDouble(this.props.getProperty(PropertyNames.SAMPLE_RATE, "500.0"));
 		this.limit = RateLimiter.create(sampleRate);
-		this.threadNum = Integer.parseInt(props.getProperty(PropertyNames.THREAD_NUM, "1"));
+		this.threadNum = Integer.parseInt(this.props.getProperty(PropertyNames.THREAD_NUM, "1"));
 		this.service = Executors.newFixedThreadPool(threadNum);
-		this.filters = SampleFilterManager.createSampleFilters(props);
 		this.isStarted = false;
 	}
 

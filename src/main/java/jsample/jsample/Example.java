@@ -3,6 +3,8 @@ package jsample.jsample;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Scanner;
@@ -14,9 +16,9 @@ import com.google.common.base.Charsets;
  * Hello world!
  *
  */
-public class App 
+public class Example 
 {
-    public static void main(String[] args) throws Exception 
+    public static void rateSamplerExample(String[] args) throws Exception 
     {
     	AtomicInteger ai = new AtomicInteger(0);
     	Random rand = new Random();
@@ -48,5 +50,27 @@ public class App
         }
         sc.close();
         System.out.println(ai);
+    }
+    
+    public static void sampleManagerExample(String[] args) throws Exception {
+    	SampleManager.watch("test/test.props");
+    	LinkedHashMap<String, String> lhm = new LinkedHashMap<String, String>() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+    		protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+    	        return size() > 100000;
+    	    }
+    	};
+    	Random rand = new Random();
+    	while (true) {
+    		String key = String.valueOf(rand.nextInt());
+    		String value = String.valueOf(rand.nextInt());
+    		lhm.put(key, value);
+    	}
+    }
+    
+    public static void main(String[] args) throws Exception {
+    	sampleManagerExample(args);
     }
 }

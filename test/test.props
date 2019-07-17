@@ -2,3 +2,4 @@
 stat_out = test/stat.out
 contain_accept_filters = jsample,java.util
 sample_rate = 3000
+watch_dir = test
