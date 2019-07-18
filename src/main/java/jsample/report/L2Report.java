@@ -10,10 +10,12 @@ import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import com.google.common.base.Charsets;
 
@@ -22,7 +24,7 @@ import jsample.util.TreeFormat;
 public class L2Report {
 	
 	private static void printUseage() {
-		System.out.println("L2Report stat_input report_output_dir [l2_level] [threshold]");
+		System.out.println("L2Report stat_input report_output_dir [l2_level] [threshold] [query_mode]");
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -38,7 +40,6 @@ public class L2Report {
 		Path l1purePath = Paths.get(reportOutputDir, "l1pure.report");
 		Path l2OutputPath = Paths.get(reportOutputDir, "l2.report");
 		
-		
 		int maxLevel = Integer.MAX_VALUE;
 		if (args.length >= 3) {
 			maxLevel = Integer.parseInt(args[2]);
@@ -46,6 +47,11 @@ public class L2Report {
 		double threshold = 0.01;
 		if (args.length >= 4) {
 			threshold = Double.parseDouble(args[3]);
+		}
+		
+		int queryMode = 0;
+		if (args.length >= 5) {
+			queryMode = Integer.parseInt(args[4]);
 		}
 		
 		Map<String, TreeFormat.Node<StackFrame>> rootMap = new HashMap<>();
@@ -93,7 +99,6 @@ public class L2Report {
 		PrintWriter writer = new PrintWriter(Files.newBufferedWriter(l2OutputPath, Charsets.UTF_8, 
 				StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE), true);
 		try {
-			//TODO config max format level
 			TreeFormat<StackFrame> format = new TreeFormat<>(roots, maxLevel);
 			final double ft = threshold; 
 			format.format(writer, (StackFrame frame) -> frame.getScore() > ft);
@@ -103,8 +108,38 @@ public class L2Report {
 		
 		L1Report.reportL1full(allNodeMap, l1fullPath);
 		L1Report.reportL1pure(allNodeMap, l1purePath);
+		
+		if (queryMode == 1) {
+			queryIterative(allNodeMap);
+		}
 	}
 
+	public static void queryIterative(Map<String, TreeFormat.Node<StackFrame>> allNodeMap) {
+		@SuppressWarnings("resource")
+		Scanner scan = new Scanner(System.in);
+		String line = null;
+		while (true) {
+			System.out.println("Input the className or function, fullname prefered:");
+			line = scan.nextLine().trim();
+			if (allNodeMap.containsKey(line) ) {
+				System.out.println("Exact function found:\n");
+				TreeFormat.Node<StackFrame> node = allNodeMap.get(line);
+				TreeFormat<StackFrame> format = new TreeFormat<>(Arrays.asList(node), 5);
+				format.format(new PrintWriter(System.out, true), null);
+				System.out.println("\n\n");
+			} else {
+				System.out.println("No Exact function, trying fuzzy match:\n");
+				for (Map.Entry<String, TreeFormat.Node<StackFrame>> entry : allNodeMap.entrySet()) {
+					String key = entry.getKey();
+					if (key.contains(line)) {
+						TreeFormat<StackFrame> format = new TreeFormat<>(Arrays.asList(entry.getValue()), 5);
+						format.format(new PrintWriter(System.out, true), null);
+						System.out.println("\n\n");
+					}
+				}
+			}
+		}
+	}
 }
 
 class StackFrame implements Comparable<StackFrame> {
