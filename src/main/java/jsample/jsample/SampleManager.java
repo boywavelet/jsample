@@ -52,6 +52,7 @@ public class SampleManager {
 		FileWatchRun(Properties props) throws IOException {
 			this.props = props;
 			String watchDir = props.getProperty(PropertyNames.WATCH_DIR, ".");
+			Files.createDirectories(Paths.get(watchDir));
 			this.startPath = Paths.get(watchDir, "sample.start");
 			this.stopPath = Paths.get(watchDir, "sample.stop");
 			this.updatePath = Paths.get(watchDir, "update.props");
