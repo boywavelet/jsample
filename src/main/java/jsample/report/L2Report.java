@@ -40,7 +40,7 @@ public class L2Report {
 		Path l1purePath = Paths.get(reportOutputDir, "l1pure.report");
 		Path l2OutputPath = Paths.get(reportOutputDir, "l2.report");
 		
-		int maxLevel = Integer.MAX_VALUE;
+		int maxLevel = 10;
 		if (args.length >= 3) {
 			maxLevel = Integer.parseInt(args[2]);
 		}

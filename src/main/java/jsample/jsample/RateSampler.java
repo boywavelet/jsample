@@ -18,11 +18,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.RateLimiter;
 
+import jsample.action.CollectiveStatAction;
+import jsample.action.StatAction;
+
 public final class RateSampler {
 
 	private Properties props;
 	private ConcurrentMap<String, Long> l1Stat = new ConcurrentHashMap<String, Long>();
 	private ConcurrentMap<String, Long> l2Stat = new ConcurrentHashMap<String, Long>();
+	private StatAction statAction;
 	private AtomicInteger tick = new AtomicInteger(0);
 	private List<SampleFilter> filters;
 	private RateLimiter limit;
@@ -44,6 +48,7 @@ public final class RateSampler {
 		
 		l1Stat.clear();
 		l2Stat.clear();
+		statAction = CollectiveStatAction.create(this.props);
 		tick.set(0);
 		this.filters = SampleFilterManager.createSampleFilters(this.props);
 		double sampleRate = Double.parseDouble(this.props.getProperty(PropertyNames.SAMPLE_RATE, "500.0"));
@@ -72,10 +77,11 @@ public final class RateSampler {
 		TimeUnit.SECONDS.sleep(5);
 		try {
 			exportData();
+			statAction.fini();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		isStarted = false;
+		reset(null);
 	}
 	
 	private void exportData() throws IOException {
@@ -121,16 +127,19 @@ public final class RateSampler {
 		for (int i = start; i < end; ++i) {
 			updateL2(ste, i);
 		}
+		
+		statAction.record(ste);
 	}
 	
 	private void updateL1(StackTraceElement[] ste, int index) {
 		String l1Key = getStackName(ste[index]);
 		boolean needCont = true;
-		l1Stat.putIfAbsent(l1Key, 0L);
-		while (needCont) {
-			long oldL1 = l1Stat.get(l1Key);
-			long newL1 = 1 + oldL1;
-			needCont = !l1Stat.replace(l1Key, oldL1, newL1);
+		if (l1Stat.putIfAbsent(l1Key, 1L) != null) {
+			while (needCont) {
+				long oldL1 = l1Stat.get(l1Key);
+				long newL1 = 1 + oldL1;
+				needCont = !l1Stat.replace(l1Key, oldL1, newL1);
+			}
 		}
 	}
 	
@@ -140,11 +149,12 @@ public final class RateSampler {
 		}
 		String l2Key = getStackName(ste[index + 1]) + "," + getStackName(ste[index]);
 		boolean needCont = true;
-		l2Stat.putIfAbsent(l2Key, 0L);
-		while (needCont) {
-			long oldL1 = l2Stat.get(l2Key);
-			long newL1 = 1 + oldL1;
-			needCont = !l2Stat.replace(l2Key, oldL1, newL1);
+		if (l2Stat.putIfAbsent(l2Key, 1L) != null) {
+			while (needCont) {
+				long oldL1 = l2Stat.get(l2Key);
+				long newL1 = 1 + oldL1;
+				needCont = !l2Stat.replace(l2Key, oldL1, newL1);
+			}
 		}
 	}
 	

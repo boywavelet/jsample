@@ -59,7 +59,7 @@ public class Example
 
 			@Override
     		protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
-    	        return size() > 100000;
+    	        return size() > 10000;
     	    }
     	};
     	Random rand = new Random();

@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 public class TreeFormat<Payload extends Comparable<Payload>> {
 
 	private List<Node<Payload>> roots;
+	//TODO maxLevel should be confined, if A call B, B call A, then format will enter dead loop
 	private int maxLevel = Integer.MAX_VALUE;
 	public TreeFormat(List<Node<Payload>> roots, int maxLevel) {
 		this.roots = roots;
